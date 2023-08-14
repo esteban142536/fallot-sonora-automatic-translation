@@ -53,8 +53,8 @@ print('Done with all files!')
 input('Awaiting order of translation...')
 
 #translation from russian to english here
-print("translating...")
 text = open(f'mastercuts_1.txt', "r")
+print('translating '+len(text.readlines())+' lines')
 for i in range(1, len(text.readlines()) + 1):
     extractText = extract_value(text.readline())
 
@@ -70,6 +70,7 @@ for i in range(1, len(text.readlines()) + 1):
     print('line {i} done')
 print(englishDocument)
 
+input('Awaiting splitting...')
 
 # Merge and split mastercuts files
 merged_content = ""
