@@ -1,8 +1,4 @@
 
-#1- take the content of text folder and translate it from russia to english using google azure translator
-#2- add it back to the game folder
-#3 ???
-#4- profit
 import os
 import re
 from progress.bar import Bar
@@ -104,11 +100,11 @@ def translation_fallback(text, trigger_first=False):
     try:
         if trigger_first:
             raise Exception("trigger first")
-        return translate(text)
+        return asyncio.run(deep_translate(text))
     except Exception as error1:
         print(f"\nerror in translation_fallback: {text} \n {error1}")
         try:
-            return asyncio.run(deep_translate(text))
+            return translate(text)
         except Exception as error2:
             print(f"\nerror in translation_fallback: {text} \n {error2}")
             quit()
