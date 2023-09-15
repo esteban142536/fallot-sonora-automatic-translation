@@ -12,21 +12,24 @@ import ast
 import traceback
 from gpytranslate import Translator
 import asyncio
+from unidecode import unidecode
 
-key = '<key here>'
-region = '<region here>'
-endpoint = '<an url to the service>'
+key = '<key>'
+region = '<Location>'
+endpoint = '<endpoint>'
 
-file_list = os.listdir('./')
-file_list.remove('translatorV2.py')
-file_list.remove('whitelist.txt')
+# file_list = os.listdir('./')
+# file_list.remove('translatorV2.py')
+# file_list.remove('whitelist.txt')
+directories =  ["game","dialog"]
 
 
 #     # remove from whitelist in 
-whitelist = open(f'whitelist.txt', 'r').read()
-whitelist_list = ast.literal_eval(whitelist)
-file_list_filter = [item for item in file_list if item not in whitelist]
-file_list_filter.sort()
+# open(f'whitelist.txt', 'w').write(str([]))
+# whitelist = open(f'whitelist.txt', 'r').read()
+# whitelist_list = ast.literal_eval(whitelist)
+# file_list_filter = [item for item in file_list if item not in whitelist]
+# file_list_filter.sort()
 
 # funcion that translate everything
     
@@ -89,7 +92,7 @@ def detect_file_encoding(file_path):
 
 def replace_special_characters(text):
     # Replace special characters with Unicode escape sequences
-    return text.encode('unicode_escape').decode('utf-8')
+    return unidecode(text)
 
 def white_list(file_name):
    whitelist = open(f'whitelist.txt', 'r').read()
@@ -97,36 +100,68 @@ def white_list(file_name):
    whitelist_list.append(file_name)
    open(f'whitelist.txt', 'w').write(str(whitelist_list))
 
-for filename in file_list_filter:
-    file_encoding = detect_file_encoding(filename)
-    document = ""
-    fileContent = open(filename, 'r', encoding=file_encoding).readlines()
-    with Bar('working in ' + filename, max=len(fileContent)) as bar2:
+def translation_fallback(text, trigger_first=False):
+    try:
+        if trigger_first:
+            raise Exception("trigger first")
+        return translate(text)
+    except Exception as error1:
+        print(f"\nerror in translation_fallback: {text} \n {error1}")
         try:
-            for text in fileContent:
-                values = extract_value(text)
-                if str(values) == 'None' or values is None:
-                    document += '\n'
-                    bar2.next()
-                    continue
-                if values[1] is None:
-                    document += "{" + str(values[0]) + "}{" + "}{" + "}\n"
-                    bar2.next()
-                    continue
+            return asyncio.run(deep_translate(text))
+        except Exception as error2:
+            print(f"\nerror in translation_fallback: {text} \n {error2}")
+            quit()
 
-                translated_text = asyncio.run(deep_translate(values[1]))
-                translated_text = replace_special_characters(translated_text)  # Replace special characters
-                document += "{" + str(values[0]) + "}{}{" + translated_text + "}\n"
-                bar2.dynamic_s= f'Translating: {translated_text}'
-                bar2.next()
-        except Exception as error:
-            print("\nerror in " + filename)
-            full_traceback = traceback.format_exc()
-            print("An error occurred:\n")
-            print(full_traceback)
-            break
-        with open(filename, 'w', encoding=file_encoding) as file:
-            file.write(document)
-        white_list(filename)
-        bar2.next()
+
+for directory in directories:
+    files = os.listdir(directory)
+
+    whitelist = open(f'whitelist.txt', 'r').read()
+    whitelist_list = ast.literal_eval(whitelist)
+    file_list_filter = [item for item in files if item not in whitelist]
+    file_list_filter.sort()
+
+    for filename in file_list_filter:
+
+        file_path = os.path.join(directory, filename)
+
+        file_encoding = detect_file_encoding(file_path)
+        document = ""
+        fileContent = open(file_path, 'r', encoding=file_encoding).readlines()
+        with Bar('working in ' + file_path, max=len(fileContent)) as bar2:
+            try:
+                for text in fileContent:
+                    values = extract_value(text)
+                    if str(values) == 'None' or values is None:
+                        document += '\n'
+                        bar2.next()
+                        continue
+                    if values[1] is None:
+                        document += "{" + str(values[0]) + "}{" + "}{" + "}\n"
+                        bar2.next()
+                        continue
+
+                    # simple_text = replace_special_characters(values[1])  # Replace special characters
+
+                    try:
+                        translated_text = translation_fallback(values[1])
+                    except Exception:
+                        print(f"\nSwitching to specials")
+                        simple_text = replace_special_characters(values[1])  # Replace special characters
+                        translated_text = translation_fallback(simple_text, True)
+                    
+                    document += "{" + str(values[0]) + "}{}{" + translated_text + "}\n"
+                    # os.system('cls')
+                    bar2.next()
+            except Exception as error:
+                print("\nerror in " + file_path)
+                full_traceback = traceback.format_exc()
+                print("An error occurred:\n")
+                print(full_traceback)
+                break
+            with open(file_path, 'w', encoding='utf-8') as file:
+                file.write(document)
+            white_list(filename)
+            bar2.next()
     
