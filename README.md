@@ -29,7 +29,7 @@ This Python script is designed to translate the content of text files from Russi
 
 2. Configure your Google Azure Translator API key, region, and endpoint by setting the `key`, `region`, and `endpoint` variables in the script.
 
-3. You will require to extract your `master.dat` for your copy of Fallout Sonora, you can use [Dat Explorer by Dims]([https://link-url-here.org](https://www.nma-fallout.com/resources/dat-explorer-by-dims.56/))
+3. You will require to extract your `master.dat` for your copy of Fallout Sonora, you can use [Dat Explorer by Dims](https://www.nma-fallout.com/resources/dat-explorer-by-dims.56/)
 
 4. Once extracter move to this directios `master.dat\text\russian`, there is where you put `translatorV2.py`  
 
