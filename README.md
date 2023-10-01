@@ -42,3 +42,5 @@ This Python script is designed to translate the content of text files from Russi
 - The script detects the encoding of text files to ensure proper reading and writing.
 - It uses a whitelist to avoid retranslating previously translated text lines.
 - If any errors occur during translation or processing, the script will print detailed error messages to help diagnose the issue.
+
+If you use the code, please give me credit or star it, it would help me a lot
