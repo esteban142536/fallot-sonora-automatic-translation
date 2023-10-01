@@ -17,6 +17,7 @@ endpoint = '<endpoint>'
 # file_list = os.listdir('./')
 # file_list.remove('translatorV2.py')
 # file_list.remove('whitelist.txt')
+# the directory of where the files are storage, can be change
 directories =  ["game","dialog"]
 
 
@@ -28,7 +29,11 @@ directories =  ["game","dialog"]
 # file_list_filter.sort()
 
 # funcion that translate everything
-    
+
+# By using regex, it will extract the text and the number from the files, if the file is {100}{}{hello word}, it will return a list of 2 items: [100]["Hello word"]
+# if the input is {100}{}{}, it will return [100][None]
+# if there's no match, will not return nothing
+
 def extract_value(input_string):
     number_match = re.match(r'\{(\d+)\}\{\}\{(.+?)\}', input_string)
     if number_match:
@@ -41,6 +46,7 @@ def extract_value(input_string):
         number = int(text_match.group(1))
         return [number, None]
 
+# This translate using any API as external request, can be change to any other, by default its use Azure Translate
 def translate(text):
     # Use the Translator translate function
     url = endpoint + '/translate'
@@ -74,28 +80,34 @@ def translate(text):
         print(full_traceback)
     return translation
 
+# This translate using gpytranslate, can be change to any other
 async def deep_translate(text):
     t = Translator()
     translation = await t.translate(text, sourcelang="ru", targetlang="en")
     return translation.text
 
 
-
+# This will keep the file encoding the same to any modified file, due to the files are in Russian, there's some encoding that are different
 def detect_file_encoding(file_path):
     with open(file_path, 'rb') as file:
         result = chardet.detect(file.read())
     return result['encoding']
 
+# Replace special characters with Unicode escape sequences, this is for special characters
+# This works only with any Google Translate API, Azure dont support it
 def replace_special_characters(text):
-    # Replace special characters with Unicode escape sequences
     return unidecode(text)
 
+# Each time that a file is transalte, it will be add it to a whitelist to avoid re-translate it
+# This file must be reated before the code run, keep the name the same and the content must be an empty list "[]"
 def white_list(file_name):
    whitelist = open(f'whitelist.txt', 'r').read()
    whitelist_list = ast.literal_eval(whitelist)
    whitelist_list.append(file_name)
    open(f'whitelist.txt', 'w').write(str(whitelist_list))
 
+# This manage the translation, if one of the translation API fail, it will switch to the other and so on, in order to keep it automatic
+# Can add as much layer that you want, there's also an option to throw an intencional error to use a specific translation API
 def translation_fallback(text, trigger_first=False):
     try:
         if trigger_first:
